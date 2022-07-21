@@ -1,0 +1,80 @@
+---
+title: "belief_data_summary"
+author: "Alex Rogers"
+date: '2022-07-20'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+setwd("/Users/rogershome/Desktop/loop_practice/")
+maxrate <-read.csv("allratings.csv")
+as.numeric(maxrate$MaxRating) #cast max rating column as numbers
+```
+
+## calculating mean and sd 
+
+```{r}
+setwd("/Users/rogershome/Desktop/loop_practice/")
+dist <- list.files(pattern = "DistRatings_") #locate the files we want to loop over 
+dist
+
+# make empty dataframe to hold summary stats; columns will be named participant id, mean, sd
+columns = c("SubjectID", "average", "sd") #column names
+
+sum.stats = data.frame(matrix(nrow = 0, ncol = length(columns))) 
+colnames(sum.stats) = columns
+#print(sum.stats)
+
+
+for (i in 1:length(dist)) {
+  d <- read.csv(dist[i]) #read in ith file
+   subjnum <- as.integer(sub("\\D.*$", "",sub(".*_", "", dist[i])))  # #extract subject number for each dist
+   submaxind <- which(maxrate$SubjectID == subjnum) #which row in max rate has subjnum
+  submax <- maxrate[submaxind, 4] #what is the maxrate listed in 3rd column of maxrate at submaxsind row
+  
+  as.numeric(d[1,]) #cast first row of data as numbers
+  d_edit <- d[-c(2), ] #removes the second row of each file
+  
+  #print(d_edit[1,])
+  
+   mid_bins <-submax*seq(.025, .5, by =.025) #create vector that multiplies submax by middle bins in increments of .025
+    #print(mid_bins)
+   
+  d_edit <-rbind(c(mid_bins), d_edit) #binding appropriate vector for middle bins to each file
+  d_transpose <-as.data.frame(t(d_edit))
+  #print(d_transpose)
+  
+  #create new vector or empty list ; this will be used to hold values needed to calculate mean and sd
+  # new vector will hold mid_bin values repeated according to number of votes at each mid_bin
+  #example: if the number of votes/tokens at 2.5 pumps is 10, then 2.5 will be repeated 10 times; if number of votes at 5 is 20, then 5 is repeated 20 times
+  
+  new_vector <- mapply(rep, d_transpose$V1, d_transpose$V2)
+  
+  #print(new_vector)
+  vec <-as.numeric(unlist(new_vector)) #must unlist vector and cast as numeric to calculate mean
+  
+  #store mean of new vector in variable 
+  mean.dist <-mean(vec)
+  #print(mean.dist)
+  
+  #store sd of new vector in variable
+  stdev.dist <-sd(vec)
+  #print(stdev.dist)
+  
+  #bind subjnum. mean, and sd to summary stat dataframe
+  summary_row = as.data.frame(rbind(subjnum, mean.dist, stdev.dist)) #bind vector to summary stat dataframe with subjnum, mean, sd
+  sum_row_trans <-as.data.frame(t(summary_row))
+  sum.stats <- rbind(sum.stats, sum_row_trans)
+ }
+View(sum.stats)
+
+write.csv(sum.stats, "belief_data_summary_stats.csv")
+```
+
+## Including Plots
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
