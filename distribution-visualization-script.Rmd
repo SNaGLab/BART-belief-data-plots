@@ -1,0 +1,70 @@
+---
+title: "Recreating Belief Distributions"
+author: "Alex Rogers"
+date: "7/11/2022"
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## testing w/ subset of data
+
+```{r}
+setwd("/Users/rogershome/Desktop/loop_practice/")
+library(ggplot2)
+library(gridExtra)
+library(ggpubr)
+maxrate <-read.csv("allratings.csv")
+as.numeric(maxrate$MaxRating) #cast max rating column as numbers
+
+test_files <- list.files(pattern = "DistRatings_") #locates files 
+test_files
+
+plotList <- list() #hold all ggplots in list 
+
+for (i in 1:length(test_files)) {
+  data <- read.csv(test_files[i]) #read in ith file
+   subjnum <- as.integer(sub("\\D.*$", "",sub(".*_", "", test_files[i])))  # #extract subject number from test_files[i]
+   submaxind <- which(maxrate$SubjectID == subjnum) #which row in max rate has subjnum
+  submax <- maxrate[submaxind, 4] #what is the maxrate listed in 3rd column of maxrate at submaxsind row
+  
+  as.numeric(data[1,]) #cast first row of data as numbers
+  data_edit <- data[-c(2), ] #removes the second row of each file
+  
+  
+  #use middle of bin instead of edge (i.e. 2.5 instead of 5)
+ 
+  
+  middle_bins <-submax*seq(.025, .5, by =.025)   #create vector that multiplies submax by middle bins in increments of .025
+                                                 #converts percentage of max balloon size into raw pumps
+  
+  
+  
+  data_edit2 <-rbind(c(middle_bins), data_edit) #binding appropriate vector for middle bins to each file
+  data_transpose <- as.data.frame(t(data_edit2)) #transpose the rows to columns for graphing
+ 
+
+ # Basic barplot
+ #this is where we graph the participants belief values against their corresponding number of pumps 
+#make sure each graph is labeling the participant's whose data is being displayed
+ #arrange into grid format
+
+plotList[[i]] <- print(ggplot(data=data_transpose, aes(x=V1, y=V2)) + labs(title= paste("Participant", subjnum, sep = " ") ,
+  x = "Number of Pumps", y = "")+ xlim(0, submax) + ylim(0,100) +geom_bar(stat="identity"))
+ }
+
+
+plots <- ggarrange(plotlist = plotList,
+                        nrow = 5, ncol = 4)
+
+ggexport(plots, filename = "plots_edited.pdf")
+
+```
+
+
