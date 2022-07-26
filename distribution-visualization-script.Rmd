@@ -26,7 +26,7 @@ as.numeric(maxrate$MaxRating) #cast max rating column as numbers
 test_files <- list.files(pattern = "DistRatings_") #locates files 
 test_files
 
-plotList <- list() #hold all ggplots in list 
+plotList <- list() #hold all ggplots in list
 
 for (i in 1:length(test_files)) {
   data <- read.csv(test_files[i]) #read in ith file
@@ -37,17 +37,17 @@ for (i in 1:length(test_files)) {
   as.numeric(data[1,]) #cast first row of data as numbers
   data_edit <- data[-c(2), ] #removes the second row of each file
   
+  #converting percentage of max balloon size into raw pumps
   
-  #use middle of bin instead of edge (i.e. 2.5 instead of 5)
- 
-  
+  edge_bins <-submax*seq(.05, 1, by =.05) #for using edges of bins
+  # for using middle of bin instead of edge (i.e. 2.5 instead of 5)
   middle_bins <-submax*seq(.025, .5, by =.025)   #create vector that multiplies submax by middle bins in increments of .025
-                                                 #converts percentage of max balloon size into raw pumps
-  
-  
+                                
+  data_edits <-rbind(c(edge_bins), data_edit) #binding appropriate vector for edge bins to each file
+  data_transpose <- as.data.frame(t(data_edits)) #transpose the rows to columns for graphing
   
   data_edit2 <-rbind(c(middle_bins), data_edit) #binding appropriate vector for middle bins to each file
-  data_transpose <- as.data.frame(t(data_edit2)) #transpose the rows to columns for graphing
+  data_transposed <- as.data.frame(t(data_edit2)) #transpose the rows to columns for graphing
  
 
  # Basic barplot
@@ -57,13 +57,17 @@ for (i in 1:length(test_files)) {
 
 plotList[[i]] <- print(ggplot(data=data_transpose, aes(x=V1, y=V2)) + labs(title= paste("Participant", subjnum, sep = " ") ,
   x = "Number of Pumps", y = "")+ xlim(0, submax) + ylim(0,100) +geom_bar(stat="identity"))
+
+#for plotting middle_bins
+# plotList[[i]] <- print(ggplot(data=data_transposed, aes(x=V1, y=V2)) + labs(title= paste("Participant", subjnum, sep = " ") ,
+#   x = "Number of Pumps", y = "")+ xlim(0, submax) + ylim(0,100) +geom_bar(stat="identity"))
  }
 
 
 plots <- ggarrange(plotlist = plotList,
                         nrow = 5, ncol = 4)
 
-ggexport(plots, filename = "plots_edited.pdf")
+ggexport(plots, filename = "belief_plots.pdf")
 
 ```
 
